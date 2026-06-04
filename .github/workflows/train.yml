@@ -1,0 +1,28 @@
+name: Train ML Model
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  train-model:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-central-1
+
+      - name: Start Step Function execution
+        run: |
+          aws stepfunctions start-execution \
+            --state-machine-arn arn:aws:states:eu-central-1:843121826181:stateMachine:MLOpsPipeline \
+            --name "train-${{ github.run_number }}-$(date +%s)" \
+            --input '{"source": "github-actions", "commit": "${{ github.sha }}", "branch": "${{ github.ref_name }}"}'
